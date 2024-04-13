@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Nunito } from "next/font/google";
-import Navbar from "./componenets/navbar/Navbar";
 
 export const metadata: Metadata = {
   title: "Employees Management System",
@@ -17,10 +16,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={font.className}>
-        <Navbar />
-        {children}
-      </body>
+      <body className={font.className}>{children}</body>
     </html>
   );
 }
