@@ -4,6 +4,7 @@ import Container from "../Container";
 import Logo from "./Logo";
 import Search from "./Search";
 import AdminMenu from "./AdminMenu";
+import Departments from "./Departments";
 
 const Navbar = () => {
   return (
@@ -17,6 +18,7 @@ const Navbar = () => {
           </div>{" "}
         </Container>
       </div>
+      <Departments />
     </div>
   );
 };

@@ -8,6 +8,8 @@ const Search = () => {
       <div className="flex flex-row items-center justify-between ">
         <div className="text-sm font-semibold px-6">Search by name</div>
         <div className="text-sm font-semibold px-6">Search by location</div>
+        <div className="text-sm font-semibold px-6">Search by job title</div>
+
         <div className="text-sm font-semibold px-6">
           <BiSearch size={18} />
         </div>
