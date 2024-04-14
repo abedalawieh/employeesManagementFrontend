@@ -53,13 +53,37 @@ const EmployeeCard: React.FC<EmployeeCardProps> = ({
       jobTitle: jobTitle,
       picture: picture,
     };
-    try {
-      const result = await saveEmployee(employeeData);
-      Event.emit("RemoveEmployeeFromArray", id);
-      toast.success(result);
-    } catch (error: any) {
-      handleError(error);
-    }
+    toast((t) => (
+      <div className=" relative flex flex-col items-center justify-between  overflow-hidden bg-gray-100">
+        <div className="bg-white p-8 rounded-lg shadow-md">
+          <p className="mb-4">Are you sure you want to save?</p>
+          <div className="flex justify-center">
+            <button
+              onClick={async () => {
+                try {
+                  const result = await saveEmployee(employeeData);
+                  Event.emit("RemoveEmployeeFromArray", id);
+
+                  toast.success(result);
+                } catch (error: any) {
+                  handleError(error);
+                }
+                toast.dismiss(t.id);
+              }}
+              className="px-4 py-2 bg-green-600 text-white rounded mr-2 hover:bg-red-600"
+            >
+              Yes
+            </button>
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+            >
+              No
+            </button>
+          </div>
+        </div>
+      </div>
+    ));
   };
   const updateCurrentEmployee = async (e: any) => {
     e.preventDefault();
@@ -71,14 +95,37 @@ const EmployeeCard: React.FC<EmployeeCardProps> = ({
       department: department,
       jobTitle: jobTitle,
     };
-    try {
-      const result = await updateEmployee(employeeData);
-      Event.emit("UpdateEmployeeFromArray", employeeData);
-      toast.success(result);
-      router.push("/");
-    } catch (error: any) {
-      handleError(error);
-    }
+    toast((t) => (
+      <div className=" relative flex flex-col items-center justify-between  overflow-hidden bg-gray-100">
+        <div className="bg-white p-8 rounded-lg shadow-md">
+          <p className="mb-4">Are you sure you want to update?</p>
+          <div className="flex justify-center">
+            <button
+              onClick={async () => {
+                try {
+                  const result = await updateEmployee(employeeData);
+                  Event.emit("UpdateEmployeeFromArray", employeeData);
+                  toast.success(result);
+                  router.push("/");
+                } catch (error: any) {
+                  handleError(error);
+                }
+                toast.dismiss(t.id);
+              }}
+              className="px-4 py-2 bg-yellow-600 text-white rounded mr-2 hover:bg-red-600"
+            >
+              Yes
+            </button>
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+            >
+              No
+            </button>
+          </div>
+        </div>
+      </div>
+    ));
   };
   const handleError = async (error: any) => {
     if (error.message === "Validation error") {
@@ -97,11 +144,36 @@ const EmployeeCard: React.FC<EmployeeCardProps> = ({
 
   const handleDelete = async (e: any) => {
     e.preventDefault();
-    try {
-      disabled ? await deleteFunction(e) : await defaultDeleteFunction(e);
-    } catch (error: any) {
-      handleError(error);
-    }
+    toast((t) => (
+      <div className=" relative flex flex-col items-center justify-between  overflow-hidden bg-gray-100">
+        <div className="bg-white p-8 rounded-lg shadow-md">
+          <p className="mb-4">Are you sure you want to delete?</p>
+          <div className="flex justify-center">
+            <button
+              onClick={async () => {
+                try {
+                  disabled
+                    ? await deleteFunction(e)
+                    : await defaultDeleteFunction(e);
+                } catch (error: any) {
+                  handleError(error);
+                }
+                toast.dismiss(t.id);
+              }}
+              className="px-4 py-2 bg-red-600 text-white rounded mr-2 hover:bg-red-600"
+            >
+              Yes
+            </button>
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+            >
+              No
+            </button>
+          </div>
+        </div>
+      </div>
+    ));
   };
   const deleteFunction = async (e: any) => {
     e.preventDefault();
@@ -119,8 +191,7 @@ const EmployeeCard: React.FC<EmployeeCardProps> = ({
 
   const handleUpdate = async (e: any) => {
     e.preventDefault();
-    // Perform different action for update when isUpdate is true
-    // For example, redirect to a different page
+
     router.push(`employees/${id}`);
   };
 

@@ -1,10 +1,9 @@
 "use client";
-import Image from "next/image";
 import Navbar from "./componenets/navbar/Navbar";
 import toast, { Toaster } from "react-hot-toast";
 import { isAuthenticated } from "@/app/utils/isAuthenticated";
-import { use, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { get } from "@/app/actions/getEmployees.action.js";
 import { Employee } from "./models/Employee";
 import EmployeeCard from "./componenets/employee/EmployeeCard";
@@ -13,12 +12,18 @@ import Event from "@/app/events/event.js";
 
 export default function Home() {
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [department, setDepartment] = useState("");
+  const [hasDepartment, setHasDepartment] = useState(false);
+
   const router = useRouter();
+  const searchParams = useSearchParams();
+
   useEffect(() => {
     if (!isAuthenticated()) {
       router.push("/login");
     }
   }, []);
+
   useEffect(() => {
     Event.addListener("UpdateEmployeeFromArray", (data) => {
       setEmployees((prevEmployees) =>
@@ -28,12 +33,14 @@ export default function Home() {
       );
     });
   }, [employees]);
+
   useEffect(() => {
     Event.addListener("RemoveEmployeeFromArrayAtHomePage", (id) => {
       const newEmployees = employees.filter((employee) => employee.id !== id);
       setEmployees(newEmployees);
     });
   }, [employees]);
+
   useEffect(() => {
     const getEmployees = async () => {
       try {
@@ -58,16 +65,32 @@ export default function Home() {
     };
     getEmployees();
   }, []);
+
+  useEffect(() => {
+    console.log(String(searchParams.get("n") == ""));
+    if (searchParams.has("department")) {
+      setHasDepartment(true);
+      setDepartment(String(searchParams.get("department")));
+    } else {
+      setHasDepartment(false);
+    }
+  }, [searchParams]);
+
   return (
     <>
-      {" "}
       <Toaster position="top-center" />
       <Navbar />
       <div className="pt-20 mt-25">
         <div className="pt-40 pb-40 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-8">
-          {employees.map((employee: any) => {
-            return <EmployeeCard data={employee} disabled={true} />;
-          })}
+          {hasDepartment
+            ? employees
+                .filter((employee) => employee.department == department)
+                .map((employee: any) => {
+                  return <EmployeeCard data={employee} disabled={true} />;
+                })
+            : employees.map((employee: any) => {
+                return <EmployeeCard data={employee} disabled={true} />;
+              })}
         </div>
       </div>
     </>
