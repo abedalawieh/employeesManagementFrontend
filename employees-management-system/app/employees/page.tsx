@@ -25,11 +25,11 @@ const EmployeesPage = () => {
   const [count, setCount] = useState(0);
 
   const getEmployees = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault(); // Prevent default form submission behavior
+    e.preventDefault();
 
     try {
       const result = await createEmployees(count);
-      setEmployees(result); // Update state with fetched employees
+      setEmployees(result);
     } catch (error: any) {
       console.error("Error fetching employees:", error.message);
     }

@@ -1,41 +1,69 @@
-"use client";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { Employee } from "@/app/models/Employee";
 import Button from "../Button";
 import InputField from "../Input";
 import { useEffect, useState } from "react";
 import { saveEmployee } from "@/app/actions/saveEmployee.action";
+import { deleteEmployee } from "@/app/actions/deleteEmployee.action";
+import { updateEmployee } from "@/app/actions/updateEmployee.action";
+
 import toast from "react-hot-toast";
 import EventEmitter from "@/app/utils/EventEmitter";
 import Event from "@/app/events/event.js";
+import { Employee } from "@/app/models/Employee";
+import { useRouter } from "next/navigation";
+
 interface EmployeeCardProps {
   data: Employee;
+  disabled?: boolean;
+  isUpdate?: boolean;
 }
 
-const EmployeeCard: React.FC<EmployeeCardProps> = ({ data }) => {
+const EmployeeCard: React.FC<EmployeeCardProps> = ({
+  data,
+  disabled,
+  isUpdate,
+}) => {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [location, setLocation] = useState("");
-  const [department, setDepartment] = useState("");
-  const [jobTitle, setJobTitle] = useState("");
-  const [picture, setPicture] = useState("");
-  const [name, setName] = useState("");
+  const [email, setEmail] = useState(data.email);
+  const [location, setLocation] = useState(data.location);
+  const [department, setDepartment] = useState(data.department);
+  const [jobTitle, setJobTitle] = useState(data.jobTitle);
+  const [picture, setPicture] = useState(data.picture);
+  const [name, setName] = useState(data.name);
+  const [id, setId] = useState(data.id);
 
-  const [id, setId] = useState("");
   useEffect(() => {
-    setDepartment(data.department);
     setEmail(data.email);
-    setPicture(data.picture);
     setLocation(data.location);
+    setDepartment(data.department);
     setJobTitle(data.jobTitle);
-    setId(data.id);
+    setPicture(data.picture);
     setName(data.name);
+    setId(data.id);
   }, [data]);
 
   const handleSave = async (e: any) => {
     e.preventDefault();
-    const data = {
+    const employeeData = {
+      id: id,
+      name: name,
+      location: location,
+      email: email,
+      department: department,
+      jobTitle: jobTitle,
+      picture: picture,
+    };
+    try {
+      const result = await saveEmployee(employeeData);
+      Event.emit("RemoveEmployeeFromArray", id);
+      toast.success(result);
+    } catch (error: any) {
+      handleError(error);
+    }
+  };
+  const updateCurrentEmployee = async (e: any) => {
+    e.preventDefault();
+    const employeeData = {
       id: id,
       name: name,
       location: location,
@@ -44,53 +72,89 @@ const EmployeeCard: React.FC<EmployeeCardProps> = ({ data }) => {
       jobTitle: jobTitle,
     };
     try {
-      const result = await saveEmployee(data);
-      Event.emit("RemoveEmployeeFromArray", id);
+      const result = await updateEmployee(employeeData);
+      Event.emit("UpdateEmployeeFromArray", employeeData);
       toast.success(result);
+      router.push("/");
     } catch (error: any) {
-      if (error.message == "Validation error") {
-        toast.error("Couldn't save employee");
-      } else if (
-        error.message == "Your session is not valid, you must be logged in!" ||
-        error.message == "Your session has expired, please login again"
-      ) {
-        await toast.error(error.message);
-        await sessionStorage.removeItem("token");
-        await router.push("/login");
-      } else {
-        await toast.error(error.message);
-      }
+      handleError(error);
     }
   };
+  const handleError = async (error: any) => {
+    if (error.message === "Validation error") {
+      toast.error("Couldn't save employee");
+    } else if (
+      error.message === "Your session is not valid, you must be logged in!" ||
+      error.message === "Your session has expired, please login again"
+    ) {
+      await toast.error(error.message);
+      await sessionStorage.removeItem("token");
+      await router.push("/login");
+    } else {
+      await toast.error(error.message);
+    }
+  };
+
   const handleDelete = async (e: any) => {
     e.preventDefault();
-
     try {
-      Event.emit("RemoveEmployeeFromArray", id);
+      disabled ? await deleteFunction(e) : await defaultDeleteFunction(e);
     } catch (error: any) {
-      toast.error("Couldn't Delete employee");
+      handleError(error);
     }
   };
+  const deleteFunction = async (e: any) => {
+    e.preventDefault();
+    try {
+      const result = await deleteEmployee(id);
+      Event.emit("RemoveEmployeeFromArrayAtHomePage", id);
+      toast.success(result);
+    } catch (error: any) {
+      handleError(error);
+    }
+  };
+  const defaultDeleteFunction = async (e: any) => {
+    Event.emit("RemoveEmployeeFromArray", id);
+  };
+
+  const handleUpdate = async (e: any) => {
+    e.preventDefault();
+    // Perform different action for update when isUpdate is true
+    // For example, redirect to a different page
+    router.push(`employees/${id}`);
+  };
+
   return (
     <div className="col-span-1 cursor-pointer group">
-      <div className="border aspect-square w-full relative overflow-hidden rounded-x1">
-        <Image
-          fill
-          alt="listing"
-          src={picture}
-          className="object-cover h-50 w-50 group-hover:scale-110 transition"
-        />
-      </div>
+      {isUpdate ? (
+        <div className="">
+          <Image
+            width={500}
+            height={100}
+            alt="listing"
+            src={picture}
+            className="mx-auto transition"
+          />
+        </div>
+      ) : (
+        <div className="border aspect-square w-full relative overflow-hidden rounded-x1">
+          <Image
+            fill
+            alt="listing"
+            src={picture}
+            className="object-cover h-50 w-50 group-hover:scale-110 transition"
+          />
+        </div>
+      )}
+
       <div className="font-semibold text-lg">
         <InputField
           id="name"
           type="name"
           value={name}
+          disabled={disabled}
           label="Name"
-          onChange={(e) => {
-            setName(e.target.value);
-            console.log(e.target.value);
-          }}
+          onChange={(e) => setName(e.target.value)}
         />
       </div>
       <div className="font-semibold text-lg">
@@ -98,52 +162,57 @@ const EmployeeCard: React.FC<EmployeeCardProps> = ({ data }) => {
           id="email"
           type="email"
           value={email}
+          disabled={disabled}
           label="Email"
-          onChange={(e) => {
-            setEmail(e.target.value);
-            console.log(e.target.value);
-          }}
+          onChange={(e) => setEmail(e.target.value)}
         />
       </div>
       <div className="font-semibold text-lg">
-        {" "}
         <InputField
           id="jobTitle"
           type="text"
+          disabled={disabled}
           value={jobTitle}
           label="Job Title"
-          onChange={(e) => {
-            setJobTitle(e.target.value);
-          }}
+          onChange={(e) => setJobTitle(e.target.value)}
         />
       </div>
       <div className="font-semibold text-lg">
-        {" "}
         <InputField
           id="location"
           type="text"
+          disabled={disabled}
           value={location}
           label="Location"
-          onChange={(e) => {
-            setLocation(e.target.value);
-          }}
+          onChange={(e) => setLocation(e.target.value)}
         />
       </div>
       <div className="font-light text-neutral-500">
-        {" "}
         <InputField
           id="Department"
           type="text"
+          disabled={disabled}
           value={department}
-          label="department"
-          onChange={(e) => {
-            setDepartment(e.target.value);
-          }}
+          label="Department"
+          onChange={(e) => setDepartment(e.target.value)}
         />
       </div>
       <div className="flex flex-row items-center gap-1">
-        <Button onClick={handleSave} label="Save" />
-        <Button onClick={handleDelete} label="Delete" />
+        {isUpdate ? (
+          <Button onClick={updateCurrentEmployee} label="Update" />
+        ) : disabled ? (
+          <>
+            {" "}
+            <Button onClick={handleUpdate} label="Update" />
+            <Button onClick={handleDelete} label="Delete" />
+          </>
+        ) : (
+          <>
+            {" "}
+            <Button onClick={handleSave} label="Save" />
+            <Button onClick={handleDelete} label="Delete" />
+          </>
+        )}
       </div>
     </div>
   );
